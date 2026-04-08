@@ -204,7 +204,6 @@ Module Analyze_AP
 
             Call oEventLog.LogMessage(0, "")
 
-
             '=== Master Table Counts ===
             Form1.UpdateAnalysisToolStatusBar("Analyzing Accounts Payable Master Table Counts")
             sAnalysisType = "Master Table Counts"

@@ -1385,7 +1385,8 @@ Module InventoryCode
         End If  'performQtyCostValidations = True
 
 
-        Call oEventLog.LogMessage(EndProcess, "Validate Inventory")
+        'Call oEventLog.LogMessage(EndProcess, "Validate Inventory")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Inventory")
 
 
         Call MessageBox.Show("Inventory validation complete.", "Inventory Validation")

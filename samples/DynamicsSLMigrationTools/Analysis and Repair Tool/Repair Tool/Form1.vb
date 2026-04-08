@@ -82,13 +82,14 @@ Friend Class Form1
         'Get date values
         CurrDate = Date.Now
 
-        lRelease.Text = "Release: 2025-12-19"
+        lRelease.Text = gcReleaseVersion
 
     End Sub
 
 
 
     Private Sub cmdValidateAccts_Click(sender As System.Object, e As System.EventArgs) Handles cmdValidateAccts.Click
+
         Dim msgText As String = String.Empty
         Dim errPerNbr As Boolean = False
 
@@ -205,6 +206,7 @@ Friend Class Form1
                 dlgResult = MessageBox.Show(msgText, "Voided Batches Exist", MessageBoxButtons.OK)
 
             End If
+
             'Validate Chart of Accounts data
             NbrOfErrors_COA = 0
             NbrOfWarnings_COA = 0
@@ -216,10 +218,9 @@ Friend Class Form1
                 Dim eventLog As clsEventLog = New clsEventLog
                 eventLog.FileName = System.IO.Path.GetFileName(bSLMPTStatus.COAEventLogName)
 
-
-
                 'Set as Completed if no errors were found
                 If NbrOfErrors_COA = 0 Then
+
                     bSLMPTStatus.COA_ValCmpltd = 1
 
                     cCompletedCOA.Checked = bSLMPTStatus.COA_ValCmpltd
@@ -285,7 +286,6 @@ Friend Class Form1
 
                 cCompletedCOA.Checked = bSLMPTStatus.COA_ValCmpltd
                 cCompletedGLChk.Checked = bSLMPTStatus.COA_ValCmpltd
-
 
             End If
 
@@ -387,7 +387,6 @@ Friend Class Form1
             NbrOfWarnings_Cust = 0
             Call CustomerCode.Validate()
 
-
             'End process
             If OkToContinue = True Then
                 Dim eventLog As clsEventLog = New clsEventLog
@@ -451,6 +450,7 @@ Friend Class Form1
                 If (My.Computer.FileSystem.FileExists(eventLog_else.LogFile.FullName.Trim())) Then
                     Call DisplayLog(eventLog_else.LogFile.FullName.Trim())
                 End If
+
                 'Set Completed field to 0 (unchecked) since an error occurred at some point in the process
                 bSLMPTStatus.Cust_ValCmpltd = 0
 
@@ -466,7 +466,6 @@ Friend Class Form1
             bSLMPTStatus.Cust_Errors = NbrOfErrors_Cust
 
             bSLMPTStatus.Cust_Warnings = NbrOfWarnings_Cust
-
 
 
             Call UpdateStatusRecord("Customer")
@@ -553,6 +552,7 @@ Friend Class Form1
 
             'End Process
             If OkToContinue = True Then
+
                 Dim eventLog As clsEventLog = New clsEventLog
                 eventLog.FileName = System.IO.Path.GetFileName(bSLMPTStatus.VendEventLogName)
 

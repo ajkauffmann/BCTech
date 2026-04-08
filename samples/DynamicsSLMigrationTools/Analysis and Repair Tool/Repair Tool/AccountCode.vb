@@ -326,9 +326,11 @@ Module AccountCode
             End Try
 
         End If
+
         '**************************************
         '*** Check for recurring GL Batches ***
         '**************************************
+
         If OkToContinue = True Then
 
             Call sqlFetch_Num(recurBatches, "SELECT COUNT(*) FROM Batch WHERE Module = 'GL' AND BatType = 'R' AND NbrCycle > 0", SqlAppDbConn)
@@ -403,6 +405,7 @@ Module AccountCode
 
         '  Detect GLTran records with blank key fields - keys are BatNbr, LineNbr, Module
         If OkToContinue = True Then
+
             sqlStmt = "SELECT COUNT(*) FROM GLTran WHERE RTRIM(BatNbr) = '' or RTRIM(Module) = ''"
 
             Call sqlFetch_Num(nbrKeysBlk, sqlStmt, SqlAppDbConn)
@@ -446,11 +449,13 @@ Module AccountCode
 
                 sqlReader.Close()
             End If
+
         End If
 
         '**************************************************************************
         '*** Verify GL is in balance (Assets = Income - Expenses + Liabilities) ***
         '**************************************************************************
+
         Dim curBal_A As Double = 0
         Dim curBal_I As Double
         Dim curBal_E As Double
@@ -578,11 +583,10 @@ Module AccountCode
 
         End If
 
-
-
         '*********************************************************************************************
         '*** Verify posted GLTran records match amounts in AcctHist for Open Balance migrations ***
         '*********************************************************************************************
+
         Dim myFiscYear As String = String.Empty
 
         If OkToContinue = True Then
@@ -816,6 +820,7 @@ Module AccountCode
         '************************************************************
         '*** Remove time values from date fields - General Ledger ***
         '************************************************************
+
         If OkToContinue = True Then
 
             Try
@@ -839,6 +844,7 @@ Module AccountCode
         '****************************************************************
         '*** Remove time values from date fields - Shared Information ***
         '****************************************************************
+
         If OkToContinue = True Then
 
             Try
@@ -859,18 +865,15 @@ Module AccountCode
 
         End If
 
-        '****************************************************************
+        '**********************************************************
         '*** Remove time values from date fields - Cash Manager ***
-        '****************************************************************
+        '**********************************************************
         If OkToContinue = True Then
-
             Try
                 sqlReader.Close()
                 Call UpdateDates_CA(oEventLog)
-
             Catch ex As Exception
                 Call MessageBox.Show(ex.Message + vbNewLine + ex.StackTrace, "Error", MessageBoxButtons.OK)
-
                 Call LogMessage("", oEventLog)
                 Call LogMessage("Error in removing time values in date fields - Cash Manager", oEventLog)
                 Call LogMessage("Error Detail: " + ex.Message.Trim + vbNewLine + ex.StackTrace, oEventLog)
@@ -878,7 +881,6 @@ Module AccountCode
                 OkToContinue = False
                 NbrOfErrors_COA = NbrOfErrors_COA + 1
             End Try
-
         End If
         '*********************************************************************************************
         '*** Identify GLTran records with Fiscal Year different from period to post year
@@ -1074,7 +1076,8 @@ Module AccountCode
         End If
 
 
-        Call oEventLog.LogMessage(EndProcess, "Validate General Ledger")
+        'Call oEventLog.LogMessage(EndProcess, "Validate General Ledger")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate General Ledger")
 
         ' Indicte that the processing has completed.
         Call MessageBox.Show("Account validation complete.", "Account Validation")

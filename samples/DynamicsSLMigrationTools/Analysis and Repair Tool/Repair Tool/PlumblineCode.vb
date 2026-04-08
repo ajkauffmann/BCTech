@@ -61,11 +61,10 @@ Module PlumblineCode
     Public Const StopProcess As Short = -4
 
     Public Const FOUND As Short = 0
+
     Public DateField_LogMess_Line1 As String = "WARNING: Date Field Time Values Removed"
     Public DateField_LogMess_Line2 As String = "During the migration from Dynamics SL To D365 Business Central, Date fields containing time values may result in incorrect Date mappings. To ensure accurate data migration, all time values have now been removed from date fields for the following tables:"
-
-
-
+    Public gcReleaseVersion$ = "Release: 2026-04-07"
 
     '************************
     '***** Public Subs ******
@@ -251,7 +250,7 @@ Module PlumblineCode
                 Form1.lCurrPAPeriod.Text = CurrPeriodPA
 
             Else 'Projects do not exist
-                    PAExists = False
+                PAExists = False
             End If
         End If
         Call sqlReader.Close()
@@ -341,10 +340,10 @@ Module PlumblineCode
                     MultiCuryEnabled = False
                 Else  'Currncy records exist for currencies other than the base currency 
                     MultiCuryEnabled = True
-				End If
-			End If
+                End If
+            End If
 
-		End If
+        End If
         Call sqlReader.Close()
 
     End Sub
@@ -427,8 +426,8 @@ Module PlumblineCode
                 Call sqlFetch_Num(retValInt, sqlString, SqlAppDbConn)
 
                 If retValInt > 0 Then
-					UBatchesExistIN = True
-				End If
+                    UBatchesExistIN = True
+                End If
 
                 sqlString = "SELECT COUNT(*) FROM Batch WHERE CpnyID =" + SParm(CpnyId.Trim) + "AND LedgerID =" + SParm(bGLSetupInfo.LedgerID.Trim) + "AND Module = 'PO' AND Status = 'U'"
                 Call sqlFetch_Num(retValInt, sqlString, SqlAppDbConn)
@@ -1792,6 +1791,7 @@ Module PlumblineCode
         Dim sqlReader As SqlDataReader = Nothing
 
         Dim lb_INSetup As Boolean = False
+        Dim lb_INUnit As Boolean = False ' SScatliffe 3/26/2026 - VSTS 167315 - Update Date Time for tables
         Dim lb_Inventory As Boolean = False
         Dim lb_InventoryADG As Boolean = False
         Dim lb_ItemCost As Boolean = False
@@ -1808,6 +1808,12 @@ Module PlumblineCode
             sqlString = "SELECT TOP 1 * FROM INSetup WHERE (CAST(LastArchiveDate AS TIME) <> '00:00:00') OR (CAST(LastCountDate AS TIME) <> '00:00:00') OR (CAST(S4Future07 AS TIME) <> '00:00:00') OR (CAST(S4Future08 AS TIME) <> '00:00:00') OR (CAST(User7 AS TIME) <> '00:00:00') OR (CAST(User8 AS TIME) <> '00:00:00')"
             Call sqlFetch_1(sqlReader, sqlString, SqlAppDbConn, CommandType.Text)
             If sqlReader.HasRows Then lb_INSetup = True
+            Call sqlReader.Close()
+
+            ' INUnit - Check for time values in S4Future07, S4Future08, User7, User8
+            sqlString = "SELECT TOP 1 * FROM INUnit WHERE (CAST(S4Future07 AS TIME) <> '00:00:00') OR (CAST(S4Future08 AS TIME) <> '00:00:00') OR (CAST(User7 AS TIME) <> '00:00:00') OR (CAST(User8 AS TIME) <> '00:00:00')"
+            Call sqlFetch_1(sqlReader, sqlString, SqlAppDbConn, CommandType.Text)
+            If sqlReader.HasRows Then lb_INUnit = True
             Call sqlReader.Close()
 
             ' Inventory - Check for time values in IRFutureDate, LastCountDate, S4Future07, S4Future08, StdCostDate, User7, User8
@@ -1853,7 +1859,7 @@ Module PlumblineCode
             Call sqlReader.Close()
 
             ' If any tables are found, then open a new connection for updating.
-            If lb_INSetup Or lb_Inventory Or lb_InventoryADG Or lb_ItemCost Or lb_ItemSite Or lb_LotSerMst Or lb_LotSerT Or lb_Site Then
+            If lb_INSetup Or lb_INUnit Or lb_Inventory Or lb_InventoryADG Or lb_ItemCost Or lb_ItemSite Or lb_LotSerMst Or lb_LotSerT Or lb_Site Then
 
                 ' Set operation and write to event log
                 Operation = OperationType.UpdateOp
@@ -1884,6 +1890,23 @@ Module PlumblineCode
 
                     'Write to event log
                     Call LogMessage("INSetup", EventLog)
+                    NbrOfWarnings_Inv = NbrOfWarnings_Inv + 1
+
+                End If
+
+                If lb_INUnit Then
+
+                    cmdText = "UPDATE INUnit SET S4Future = CAST(S4Future07 AS date) WHERE CAST(S4Future07 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE INUnit SET S4Future08 = CAST(S4Future08 AS date) WHERE CAST(S4Future08 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE INUnit SET User7 = CAST(User7 AS date) WHERE CAST(User7 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE INUnit SET User8 = CAST(User8 AS date) WHERE CAST(User8 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+
+                    'Write to event log
+                    Call LogMessage("INUnit", EventLog)
                     NbrOfWarnings_Inv = NbrOfWarnings_Inv + 1
 
                 End If
@@ -2090,6 +2113,8 @@ Module PlumblineCode
         Dim lb_SOShipLine As Boolean = False
         Dim lb_SOShipLot As Boolean = False
         Dim lb_SOType As Boolean = False
+        Dim lb_SOLot As Boolean = False ' SScatliffe 3/26/2026 - VSTS 167315 - Update Date Time for tables
+        Dim lb_SOSetup As Boolean = False ' SScatliffe 3/26/2026 - VSTS 167315 - Update Date Time for tables
 
         Dim updTran As SqlTransaction = Nothing
 
@@ -2126,7 +2151,7 @@ Module PlumblineCode
             Call sqlReader.Close()
 
             ' If any tables are found, then open a new connection for updating.
-            If lb_SOHeader Or lb_SOLine Or lb_SOShipLine Or lb_SOShipLot Or lb_SOType Then
+            If lb_SOHeader Or lb_SOLine Or lb_SOShipLine Or lb_SOShipLot Or lb_SOType Or lb_SOLot Or lb_SOSetup Then
 
                 ' Set operation and write to event log
                 Operation = OperationType.UpdateOp
@@ -2247,6 +2272,42 @@ Module PlumblineCode
 
                     'Write to event log
                     Call LogMessage("SOType", EventLog)
+                    NbrOfWarnings_SO = NbrOfWarnings_SO + 1
+
+                End If
+
+                If lb_SOLot Then
+
+                    cmdText = "UPDATE SOLot SET S4Future07 = CAST(S4Future07 AS date) WHERE CAST(S4Future07 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOLot SET S4Future08 = CAST(S4Future08 AS date) WHERE CAST(S4Future08 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOLot SET User9 = CAST(User9 AS date) WHERE CAST(User9 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOLot SET User10 = CAST(User10 AS date) WHERE CAST(User10 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+
+                    'Write to event log
+                    Call LogMessage("SOLot", EventLog)
+                    NbrOfWarnings_SO = NbrOfWarnings_SO + 1
+
+                End If
+
+                If lb_SOSetup Then
+
+                    cmdText = "UPDATE SOSetup SET CutoffTime = CAST(CutoffTime AS date) WHERE CAST(CutoffTime AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOSetup SET S4Future07 = CAST(S4Future07 AS date) WHERE CAST(S4Future07 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOSetup SET S4Future08 = CAST(S4Future08 AS date) WHERE CAST(S4Future08 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOSetup SET User9 = CAST(User9 AS date) WHERE CAST(User9 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE SOSetup SET User10 = CAST(User10 AS date) WHERE CAST(User10 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+
+                    'Write to event log
+                    Call LogMessage("SOSetup", EventLog)
                     NbrOfWarnings_SO = NbrOfWarnings_SO + 1
 
                 End If
@@ -2866,17 +2927,31 @@ Module PlumblineCode
 
         Dim sqlReader As SqlDataReader = Nothing
 
+        Dim lb_CASetup As Boolean = False ' SScatliffe 3/26/2026 - VSTS 167315 - Update Date Time for tables
         Dim lb_CashAcct As Boolean = False
+        Dim lb_CashSumD As Boolean = False ' SScatliffe 3/26/2026 - VSTS 167315 - Update Date Time for tables
         Dim lb_CATran As Boolean = False
 
         Dim updTran As SqlTransaction = Nothing
 
         Try
 
+            ' CASetup - Check for time values in AcceptTransDate, paststartdate, S4Future07, S4Future08, User7, User8
+            sqlString = "SELECT TOP 1 * FROM CASetup WHERE (CAST(AcceptTransDate AS TIME) <> '00:00:00') OR (CAST(paststartdate AS TIME) <> '00:00:00') OR (CAST(S4Future07 AS TIME) <> '00:00:00') OR (CAST(S4Future08 AS TIME) <> '00:00:00') OR (CAST(User7 AS TIME) <> '00:00:00') OR (CAST(User8 AS TIME) <> '00:00:00') "
+            Call sqlFetch_1(sqlReader, sqlString, SqlAppDbConn, CommandType.Text)
+            If sqlReader.HasRows Then lb_CASetup = True
+            Call sqlReader.Close()
+
             ' CashAcct - Check for time values in S4Future07, S4Future08, User7, User8
             sqlString = "SELECT TOP 1 * FROM CashAcct WHERE (CAST(S4Future07 AS TIME) <> '00:00:00') OR (CAST(S4Future08 AS TIME) <> '00:00:00') OR (CAST(User7 AS TIME) <> '00:00:00') OR (CAST(User8 AS TIME) <> '00:00:00')"
             Call sqlFetch_1(sqlReader, sqlString, SqlAppDbConn, CommandType.Text)
             If sqlReader.HasRows Then lb_CashAcct = True
+            Call sqlReader.Close()
+
+            ' CashSumD - Check for time values in TranDate, S4Future07, S4Future08, User7, User8
+            sqlString = "SELECT TOP 1 * FROM CashSumD WHERE (CAST(TranDate AS TIME) <> '00:00:00') OR (CAST(S4Future07 AS TIME) <> '00:00:00') OR (CAST(S4Future08 AS TIME) <> '00:00:00') OR (CAST(User7 AS TIME) <> '00:00:00') OR (CAST(User8 AS TIME) <> '00:00:00') "
+            Call sqlFetch_1(sqlReader, sqlString, SqlAppDbConn, CommandType.Text)
+            If sqlReader.HasRows Then lb_CashSumD = True
             Call sqlReader.Close()
 
             ' CATran - Check for time values in ClearDate, TranDate, S4Future07, S4Future08, TaxRvsdDate, User7, User8
@@ -2886,7 +2961,7 @@ Module PlumblineCode
             Call sqlReader.Close()
 
             ' If any tables are found, then open a new connection for updating.
-            If lb_CashAcct Or lb_CATran Then
+            If lb_CASetup Or lb_CashAcct Or lb_CashSumD Or lb_CATran Then
 
                 ' Set operation and write to event log
                 Operation = OperationType.UpdateOp
@@ -2899,6 +2974,27 @@ Module PlumblineCode
                 SqlTranConn.Open()
 
                 updTran = TranBeg(SqlTranConn)
+
+                If lb_CASetup Then
+
+                    cmdText = "UPDATE CASetup SET AcceptTransDate = CAST(AcceptTransDate AS date) WHERE CAST(AcceptTransDate AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CASetup SET paststartdate = CAST(paststartdate AS date) WHERE CAST(paststartdate AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CASetup SET S4Future07 = CAST(S4Future07 AS date) WHERE CAST(S4Future07 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CASetup SET S4Future08 = CAST(S4Future08 AS date) WHERE CAST(S4Future08 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CASetup SET User7 = CAST(User7 AS date) WHERE CAST(User7 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CASetup SET User8 = CAST(User8 AS date) WHERE CAST(User8 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+
+                    'Write to event log
+                    Call LogMessage("CASetup", EventLog)
+                    NbrOfErrors_COA = NbrOfErrors_COA + 1
+
+                End If
 
                 If lb_CashAcct Then
 
@@ -2913,6 +3009,25 @@ Module PlumblineCode
 
                     'Write to event log
                     Call LogMessage("CashAcct", EventLog)
+                    NbrOfWarnings_COA = NbrOfWarnings_COA + 1
+
+                End If
+
+                If lb_CashSumD Then
+
+                    cmdText = "UPDATE CashSumD SET TranDate = CAST(TranDate AS date) WHERE CAST(TranDate AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CashSumD SET S4Future07 = CAST(S4Future07 AS date) WHERE CAST(S4Future07 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CashSumD SET S4Future08 = CAST(S4Future08 AS date) WHERE CAST(S4Future08 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CashSumD SET User7 = CAST(User7 AS date) WHERE CAST(User7 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+                    cmdText = "UPDATE CashSumD SET User8 = CAST(User8 AS date) WHERE CAST(User8 AS time) <> '00:00:00'"
+                    Call sql_1(sqlUpdate, cmdText, SqlTranConn, Operation, CommandType.Text, updTran)
+
+                    'Write to event log
+                    Call LogMessage("CashSumD", EventLog)
                     NbrOfWarnings_COA = NbrOfWarnings_COA + 1
 
                 End If
@@ -3818,41 +3933,41 @@ Module PlumblineCode
                         End If
                         'Check to see if segment value is in the SegDef table
                         sqlString2 = "Select * FROM SegDef WHERE FieldClassName = 'SUBACCOUNT' AND SegNumber =  '" + CStr(cnt) + "' AND ID =" + SParm(bSubAcctListInfo.SubAcct.Trim)
-                            Call sqlFetch_1(sqlDefReader, sqlString2, sqlDefConn, CommandType.Text)
+                        Call sqlFetch_1(sqlDefReader, sqlString2, sqlDefConn, CommandType.Text)
 
-                            If sqlDefReader.HasRows() = False Then
-                                'Write record to xSLMPTSubErrors table
-                                sqlString3 = "SELECT * FROM xSLMPTSubErrors WHERE SegNumber = '" + CStr(cnt) + "' AND ID =" + SParm(bSubAcctListInfo.SubAcct.Trim)
-                                Call sqlFetch_1(sqlErrReader, sqlString3, sqlErrConn, CommandType.Text)
-                                If sqlErrReader.HasRows() = False Then
-                                    Call sqlErrReader.Close()
-                                    bxSLMPTSubErrorsInfo.SegNumber = cnt
-                                    bxSLMPTSubErrorsInfo.ID = bSubAcctListInfo.SubAcct.Trim
-
-
-                                    If (sqlErrConn.State <> ConnectionState.Open) Then
-                                        sqlErrConn.Open()
-                                    End If
-
-                                    dbTran = TranBeg(sqlErrConn)
-
-                                    SqlInsertStmt = "Insert into xSLMPTSubErrors ([ID], [SegNumber]) Values(" + SParm(bSubAcctListInfo.SubAcct.Trim) + "," + SParm(cnt.ToString) + ")"
+                        If sqlDefReader.HasRows() = False Then
+                            'Write record to xSLMPTSubErrors table
+                            sqlString3 = "SELECT * FROM xSLMPTSubErrors WHERE SegNumber = '" + CStr(cnt) + "' AND ID =" + SParm(bSubAcctListInfo.SubAcct.Trim)
+                            Call sqlFetch_1(sqlErrReader, sqlString3, sqlErrConn, CommandType.Text)
+                            If sqlErrReader.HasRows() = False Then
+                                Call sqlErrReader.Close()
+                                bxSLMPTSubErrorsInfo.SegNumber = cnt
+                                bxSLMPTSubErrorsInfo.ID = bSubAcctListInfo.SubAcct.Trim
 
 
-                                    '   Call SInsert1(CSR_SegDef, "SegDef", baddSegDef)
-                                    retval = sql_1(sqlErrReader, SqlInsertStmt, sqlErrConn, OperationType.InsertOp, CommandType.Text, dbTran)
-                                    If (retval = 1) Then
-                                        statusExists = True
-                                    End If
-                                    Call TranEnd(dbTran)
-
-                                    sqlErrConn.Close()
-
+                                If (sqlErrConn.State <> ConnectionState.Open) Then
+                                    sqlErrConn.Open()
                                 End If
 
+                                dbTran = TranBeg(sqlErrConn)
 
-                                Call sqlErrReader.Close()
+                                SqlInsertStmt = "Insert into xSLMPTSubErrors ([ID], [SegNumber]) Values(" + SParm(bSubAcctListInfo.SubAcct.Trim) + "," + SParm(cnt.ToString) + ")"
+
+
+                                '   Call SInsert1(CSR_SegDef, "SegDef", baddSegDef)
+                                retval = sql_1(sqlErrReader, SqlInsertStmt, sqlErrConn, OperationType.InsertOp, CommandType.Text, dbTran)
+                                If (retval = 1) Then
+                                    statusExists = True
+                                End If
+                                Call TranEnd(dbTran)
+
+                                sqlErrConn.Close()
+
                             End If
+
+
+                            Call sqlErrReader.Close()
+                        End If
                         Call sqlDefReader.Close()
                         If (sqlDefConn.State <> ConnectionState.Closed) Then
                             Call sqlDefConn.Close()

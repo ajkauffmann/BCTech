@@ -9,6 +9,7 @@ Module Analyze_SY
      '================================================================================
 
     Public Sub Analyze_SY()
+
         Dim sqlStringExec As String = String.Empty
         Dim sqlStringStart As String = "INSERT INTO xSLAnalysisSum VALUES("
         Dim sqlStringValues As String = String.Empty
@@ -17,7 +18,7 @@ Module Analyze_SY
         Dim sDescr As String = String.Empty
         Dim sModule As String = "SY"
         Dim sResult As String = String.Empty
-        Dim sqlStringRet As String = String.Empty
+        Dim sqlStringRet As String '= String.Empty
         Dim retValInt1 As Integer
         Dim retValDbl1 As Double
         Dim retValDbl2 As Double
@@ -132,7 +133,7 @@ Module Analyze_SY
             Call AddStatusInfo(sqlStringExec, sDescr, sResult)
 
             RecID = RecID + 1
-            sDescr = "SQL Server Information:"
+            sDescr = "SQL Server Information"
             sResult = ""
             sqlStringValues = SParm(sAnalysisType) + "," + SParm(sDescr) + "," + SParm(CurrDateStr) + "," + SParm(sModule) + "," + CStr(RecID) + "," + SParm(sResult)
             sqlStringExec = sqlStringStart + sqlStringValues + sqlStringEnd
@@ -677,13 +678,13 @@ Module Analyze_SY
 
             sAnalysisType = "Screens"
 
-            If SLScreenList.Trim <> "" Then
+            If SLSscreenList.Trim <> "" Then
 
                 RecID = RecID + 1
 
                 ' Get count of custom Custom and 3rd Party screens - system DB
                 sDescr = "Number of custom and third party screens and reports:" 'in system DB (" + SysDBName.Trim + "):"
-                sqlStmt = "SELECT COUNT(*) FROM Screen WHERE Number NOT IN " + SLScreenList.Trim()
+                sqlStmt = "SELECT COUNT(*) FROM Screen WHERE Number NOT IN " + SLSscreenList.Trim()
                 Call sqlFetch_Num(retValInt1, sqlStmt, SqlSysDbConn)
                 sResult = retValInt1
                 sqlStringValues = SParm(sAnalysisType) + "," + SParm(sDescr) + "," + SParm(CurrDateStr) + "," + SParm(sModule) + "," + CStr(RecID) + "," + SParm(sResult)
@@ -693,7 +694,7 @@ Module Analyze_SY
                 ' record list of custom Custom and 3rd Party screens - system DB
                 If retValInt1 > 0 Then
 
-                    sqlStmt = "SELECT Number, Name, Module, ScreenType = CASE WHEN ScreenType = 'S' THEN 'Screen' WHEN ScreenType = 'R' THEN 'Report' WHEN ScreenType = 'Q' THEN 'SRS Report' WHEN ScreenType = 'V' THEN 'Query' ELSE '??' END  FROM Screen WHERE Number NOT IN " + SLScreenList.Trim() + " ORDER BY Module, Number"
+                    sqlStmt = "SELECT Number, Name, Module, ScreenType = CASE WHEN ScreenType = 'S' THEN 'Screen' WHEN ScreenType = 'R' THEN 'Report' WHEN ScreenType = 'Q' THEN 'SRS Report' WHEN ScreenType = 'V' THEN 'Query' ELSE '??' END  FROM Screen WHERE Number NOT IN " + SLSscreenList.Trim() + " ORDER BY Module, Number"
 
                     Call sqlFetch_1(sqlReader, sqlStmt, SqlSysDbConn, CommandType.Text)
 
@@ -906,4 +907,5 @@ Module Analyze_SY
             OkToContinue = False
         End Try
     End Sub
+
 End Module

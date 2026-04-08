@@ -186,8 +186,9 @@ Module Analyze_DB
             Call oEventLog.LogMessage(0, "")
 
             ' Get count of standard triggers - application DB
+            ' SScatliffe 3/26/2026 - VSTS 174356 - Include FRx triggers as standard triggers
             sDescr = "Number of standard Triggers in application DB (" + AppDBName.Trim + "):"
-            sqlStmt = "SELECT COUNT(*) FROM sysobjects WHERE type = 'TR' AND NAME IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger')"
+            sqlStmt = "SELECT COUNT(*) FROM sysobjects WHERE type = 'TR' AND NAME IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger','frx_account_update','frx_accthist_insert','frx_gltran_insert','frx_frl_acct_code_insert','frx_acctsub_update')"
             Call sqlFetch_Num(retValInt1, sqlStmt, SqlAppDbConn)
             sResult = retValInt1
             sqlStringValues = SParm(sAnalysisType) + "," + SParm(sDescr) + "," + SParm(CurrDateStr) + "," + SParm(sModule) + "," + CStr(RecID) + "," + SParm(sResult)
@@ -195,11 +196,12 @@ Module Analyze_DB
             Call AddStatusInfo(sqlStringExec, sDescr, sResult)
 
             ' Get list of standard triggers - application DB
+            ' SScatliffe 3/26/2026 - VSTS 174356 - Include FRx triggers as standard triggers
             If retValInt1 > 0 Then
 
                 sqlStmt = "SELECT o.Name [TriggerName], object_name(parent_obj) [TableName], crdate, CASE WHEN is_disabled = 0 THEN 'Enabled' ELSE 'Disabled' END AS Status"
                 sqlStmt += " FROM sysobjects o JOIN sys.triggers t ON t.object_id = o.id"
-                sqlStmt += " WHERE o.type = 'TR' AND o.Name IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger')"
+                sqlStmt += " WHERE o.type = 'TR' AND o.Name IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger','frx_account_update','frx_accthist_insert','frx_gltran_insert','frx_frl_acct_code_insert','frx_acctsub_update')"
                 sqlStmt += " ORDER BY o.Name"
 
 
@@ -228,8 +230,10 @@ Module Analyze_DB
             Call oEventLog.LogMessage(0, "")
 
             ' Get count of custom triggers - application DB
+            ' SScatliffe 3/26/2026 - VSTS 174356 - Exclude FRx triggers as custom triggers
             sDescr = "Number of custom Triggers in application DB (" + AppDBName.Trim + "):"
-            sqlStmt = "SELECT COUNT(*) FROM sysobjects WHERE type = 'TR' AND NAME NOT IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger')"
+            sqlStmt = "SELECT COUNT(*) FROM sysobjects WHERE type = 'TR'"
+            sqlStmt += " AND NAME NOT IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger','frx_account_update','frx_accthist_insert','frx_gltran_insert','frx_frl_acct_code_insert','frx_acctsub_update')"
             Call sqlFetch_Num(retValInt1, sqlStmt, SqlAppDbConn)
             sResult = retValInt1
             sqlStringValues = SParm(sAnalysisType) + "," + SParm(sDescr) + "," + SParm(CurrDateStr) + "," + SParm(sModule) + "," + CStr(RecID) + "," + SParm(sResult)
@@ -237,11 +241,12 @@ Module Analyze_DB
             Call AddStatusInfo(sqlStringExec, sDescr, sResult)
 
             ' Get list of custom triggers - application DB
+            ' SScatliffe 3/26/2026 - VSTS 174356 - Exclude FRx triggers as custom triggers
             If retValInt1 > 0 Then
 
                 sqlStmt = "SELECT o.Name [TriggerName], object_name(parent_obj) [TableName], crdate, CASE WHEN is_disabled = 0 THEN 'Enabled' ELSE 'Disabled' END AS Status"
                 sqlStmt += " FROM sysobjects o JOIN sys.triggers t ON t.object_id = o.id"
-                sqlStmt += " WHERE o.type = 'TR' AND o.Name NOT IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger')"
+                sqlStmt += " WHERE o.type = 'TR' AND o.Name NOT IN ('EDPurchOrd_Insert','TrnsfrDocStatusUpdate','UpdateSOShipLotWithShipLine','ADG_TR_CustNameXref_Add','ADG_TR_CustNameXref_Delete','ADG_TR_InvtDescrXref_Add','ADG_TR_InvtDescrXref_Delete','INPrjAllocHistory_Insert','INPrjAllocTranHist_Insert','INPrjAllocLotHist_Insert','Delegation_Message_Trigger','frx_account_update','frx_accthist_insert','frx_gltran_insert','frx_frl_acct_code_insert','frx_acctsub_update')"
                 sqlStmt += " ORDER BY o.Name"
 
                 Call sqlFetch_1(sqlReader, sqlStmt, SqlAppDbConn, CommandType.Text)

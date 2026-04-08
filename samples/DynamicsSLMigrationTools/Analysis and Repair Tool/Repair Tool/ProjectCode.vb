@@ -16,7 +16,6 @@ Module ProjectCode
     Dim statusClauseTask As String = String.Empty
 
 
-
     Public Sub Validate()
         '====================================================================================
         'Validate Project related records
@@ -49,28 +48,35 @@ Module ProjectCode
         '**********************************************************
         '*** Verify Projects have the Customer field populated  ***
         '**********************************************************
-        sqlStmt = "SELECT Project, Status_PA FROM PJProj WHERE RTRIM(customer) = '' " + statusClause
-        Call sqlFetch_1(sqlReader, sqlStmt, SqlAppDbConn, CommandType.Text)
-        If sqlReader.HasRows() Then
-            'Write Warning message to event log
-            Call LogMessage("", oEventLog)
-            msgText = "WARNING: Only Projects with the Customer field populated in Project Maintenance (PA.PRJ.00) will be exported from Dynamics SL. "
-            msgText = msgText + "This is due to Dynamics 365 Business Central requiring the Bill-to Customer field on a Job to be populated when importing Job Task Lines. "
-            msgText = msgText + "If you would like non-Customer projects to be migrated from Dynamics SL, it is suggested that a new 'internal' Customer ID be created to be used on Projects without a Customer assigned. "
-            msgText = msgText + "This new Customer ID can be used to populate the Customer field on these projects, allowing the project and any associated tasks to be exported from Dynamics SL."
-            msgText = msgText + vbNewLine + vbNewLine + "The Projects below will not be exported since a Customer has not been assigned:"
-            Call LogMessage(msgText, oEventLog)
-        End If
 
-        While sqlReader.Read()
+        '*************************************************************************************************************************
+        ' SScatliffe 3/26/2026 - VSTS 174357 - Remove the Project warning from Repair Tool
+        ' SL Migration code now handles this.
+        ' If no Then customer Is found, it creates a customer named: SLProjectCustomer And assigns them to the D365 BC Project.
+        '*************************************************************************************************************************
 
-            Call SetPJProjValues(sqlReader, bPJPROJInfo)
-            'Write Projects and Status to the event log
-            Call LogMessage("Project: " + bPJPROJInfo.Project + vbTab + "Project Status: " + bPJPROJInfo.Status_pa.Trim, oEventLog)
-            NbrOfWarnings_Proj = NbrOfWarnings_Proj + 1
+        'sqlStmt = "SELECT Project, Status_PA FROM PJProj WHERE RTRIM(customer) = '' " + statusClause
+        'Call sqlFetch_1(sqlReader, sqlStmt, SqlAppDbConn, CommandType.Text)
+        'If sqlReader.HasRows() Then
+        '    'Write Warning message to event log
+        '    Call LogMessage("", oEventLog)
+        '    msgText = "WARNING: Only Projects with the Customer field populated in Project Maintenance (PA.PRJ.00) will be exported from Dynamics SL. "
+        '    msgText = msgText + "This is due to Dynamics 365 Business Central requiring the Bill-to Customer field on a Job to be populated when importing Job Task Lines. "
+        '    msgText = msgText + "If you would like non-Customer projects to be migrated from Dynamics SL, it is suggested that a new 'internal' Customer ID be created to be used on Projects without a Customer assigned. "
+        '    msgText = msgText + "This new Customer ID can be used to populate the Customer field on these projects, allowing the project and any associated tasks to be exported from Dynamics SL."
+        '    msgText = msgText + vbNewLine + vbNewLine + "The Projects below will not be exported since a Customer has not been assigned:"
+        '    Call LogMessage(msgText, oEventLog)
+        'End If
 
-        End While
-        Call sqlReader.Close()
+        'While sqlReader.Read()
+
+        '    Call SetPJProjValues(sqlReader, bPJPROJInfo)
+        '    'Write Projects and Status to the event log
+        '    Call LogMessage("Project: " + bPJPROJInfo.Project + vbTab + "Project Status: " + bPJPROJInfo.Status_pa.Trim, oEventLog)
+        '    NbrOfWarnings_Proj = NbrOfWarnings_Proj + 1
+
+        'End While
+        'Call sqlReader.Close()
 
         '***********************************************************************
         '*** Check for Task records with a Task ID longer than 20 characters ***
@@ -152,8 +158,8 @@ Module ProjectCode
             NbrOfWarnings_Proj = NbrOfWarnings_Proj + 1
         End Try
 
-        Call oEventLog.LogMessage(EndProcess, "Validate Project")
-
+        'Call oEventLog.LogMessage(EndProcess, "Validate Project")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Project")
 
         Call MessageBox.Show("Project validation complete.", "Project Validation")
 

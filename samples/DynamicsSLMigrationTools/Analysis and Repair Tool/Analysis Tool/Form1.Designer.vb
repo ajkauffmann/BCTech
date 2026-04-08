@@ -396,8 +396,7 @@
         Me.lDynamicsPathWarning.Name = "lDynamicsPathWarning"
         Me.lDynamicsPathWarning.Size = New System.Drawing.Size(472, 13)
         Me.lDynamicsPathWarning.TabIndex = 93
-        Me.lDynamicsPathWarning.Text = "If Dynamics SL Usr_Rpts folder path is not provided, the process will not analyze" &
-    " custom reports."
+        Me.lDynamicsPathWarning.Text = "If Dynamics SL Usr_Rpts folder path is not provided, the process will not analyze custom reports."
         '
         'cmdBrowseSL
         '

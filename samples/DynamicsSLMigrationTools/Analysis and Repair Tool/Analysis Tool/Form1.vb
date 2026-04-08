@@ -40,11 +40,20 @@ Friend Class Form1
         cLastRunDate.Format = DateTimePickerFormat.Custom
         cLastRunDate.CustomFormat = "MM/dd/yyyy"
 
-        lRelease.Text = "Release: 2025-12-04" '& My.Application.Info.Version.ToString()
+        lRelease.Text = gcReleaseVersion.Trim '& My.Application.Info.Version.ToString()
+
+
+
+        gcPS_LocAndName = ConfigurationManager.AppSettings("PSLocationandName")
+        gcPS_AppName = ConfigurationManager.AppSettings("PSAppName")
+        gcPS_TIStagingFolder = ConfigurationManager.AppSettings("TIStagingFolder")
+        gcTI_ControlFile = ConfigurationManager.AppSettings("TIControlFile")
+        gcTI_LogFile = ConfigurationManager.AppSettings("TILogFile")
 
     End Sub
 
     Private Sub cmdSysAnalysis_Click(sender As System.Object, e As System.EventArgs) Handles cmdSysAnalysis.Click
+
         Dim result As DialogResult
 
         ' Require an output path for the log/report file before processing.
@@ -68,7 +77,6 @@ Friend Class Form1
         LastYrDate = CurrDate.AddYears(-1)
         LastYrDateStr = LastYrDate.ToString()
 
-
         'Display confirmation message
         result = MessageBox.Show("This process will run an analysis on the Dynamics SL application database (" + DBName.Trim + "). Are you sure you would like to continue?", "System Analysis", MessageBoxButtons.YesNo)
         If (result = DialogResult.Yes) Then
@@ -81,6 +89,7 @@ Friend Class Form1
     End Sub
 
     Private Sub PerformAnalysis()
+
         Dim sqlReader As SqlDataReader = Nothing
         oEventLog = New clsEventLog
         Dim sqlStmt As String = String.Empty
@@ -142,7 +151,6 @@ Friend Class Form1
                 Exit Sub
             End If
 
-            'Analyze DB - Database Objects
             Call Analyze_DB.Analyze_DB()
             If OkToContinue = True Then
                 UpdateAnalysisToolStatusBar("Finished analyzing Database Objects")
@@ -334,7 +342,8 @@ Friend Class Form1
             AnalysisStatusLbl.Text = "Error Encountered: "
         End Try
 
-        Call oEventLog.LogMessage(EndProcess, "Microsoft Dynamics SL Analysis Report")
+        Call oEventLog.LogMessage(EndProcess, "Microsoft Dynamics SL Analysis Report" & vbNewLine & gcReleaseVersion.Trim)
+
         UpdateAnalysisToolStatusBar("Analysis Completed")
         ' Display message to indicate that analysis is complete.
         Call MessageBox.Show("Analysis Completed.")
@@ -550,5 +559,4 @@ Friend Class Form1
         End If
 
     End Sub
-
 End Class

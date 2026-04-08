@@ -253,8 +253,6 @@ Module VendorCode
             Call LogMessage("", oEventLog)
         End If
 
-
-
         '****************************************
         '*** Check for fully open Prepayments ***
         '****************************************
@@ -427,7 +425,8 @@ Module VendorCode
                 NbrOfErrors_Vend = NbrOfErrors_Vend + 1
                 Call MessageBox.Show("Error Encountered: " + ex.Message.Trim + " Operation ended.")
 
-                Call oEventLog.LogMessage(EndProcess, "Validate Accounts Payable")
+                'Call oEventLog.LogMessage(EndProcess, "Validate Accounts Payable")
+                Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Accounts Payable")
 
                 Exit Sub
             End Try
@@ -512,7 +511,8 @@ Module VendorCode
             'Exit Sub
         End Try
 
-        Call oEventLog.LogMessage(EndProcess, "Validate Accounts Payable")
+        'Call oEventLog.LogMessage(EndProcess, "Validate Accounts Payable")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Accounts Payable")
 
         Call MessageBox.Show("Vendor validation complete.", "Vendor Validation")
 
