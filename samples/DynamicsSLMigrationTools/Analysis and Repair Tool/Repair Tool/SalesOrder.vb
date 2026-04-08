@@ -257,7 +257,6 @@ Module SalesOrder
         End While
         Call SqlReader.Close()
 
-
         '***********************************************************************************************************************************************
         '*** Report any shippers with inventory id > 20 characters ***
         '***********************************************************************************************************************************************
@@ -312,7 +311,8 @@ Module SalesOrder
             'Exit Sub
         End Try
 
-        Call oEventLog.LogMessage(EndProcess, "Validate Sales Order")
+        'Call oEventLog.LogMessage(EndProcess, "Validate Sales Order")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Sales Order")
 
 
         Call MessageBox.Show("Sales Order validation complete.", "Sales Order Validation")

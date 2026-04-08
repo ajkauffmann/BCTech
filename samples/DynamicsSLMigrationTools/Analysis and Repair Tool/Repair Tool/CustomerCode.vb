@@ -467,7 +467,10 @@ Module CustomerCode
             End Try
 
         End If
-        '  Detect AR_Balance records with blank key fields - keys are VendId, CpnyId
+
+        '*********************************************************************************
+        '*** Detect AR_Balance records with blank key fields - keys are VendId, CpnyId ***
+        '*********************************************************************************
         If OkToContinue = True Then
             sqlStmt = "SELECT COUNT(*) FROM AR_Balances WHERE RTRIM(CpnyId) = '' or RTRIM(CustId) = ''"
             Call sqlFetch_Num(nbrKeysBlk, sqlStmt, SqlAppDbConn)
@@ -494,7 +497,6 @@ Module CustomerCode
 
                         Call LogMessage("", oEventLog)
 
-
                         NbrOfWarnings_Cust = NbrOfWarnings_Cust + 1
 
                     End While
@@ -505,7 +507,8 @@ Module CustomerCode
             End If
         End If
 
-        Call oEventLog.LogMessage(EndProcess, "Validate Customer")
+        'Call oEventLog.LogMessage(EndProcess, "Validate Customer")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Customer")
 
         Call MessageBox.Show("Customer validation complete.", "Customer Validation")
 

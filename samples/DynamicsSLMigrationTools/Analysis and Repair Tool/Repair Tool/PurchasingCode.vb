@@ -216,7 +216,6 @@ Module PurchasingCode
 
         End If
 
-
         '*********************************************************************************************
         '*** Check for PurOrdDet records with InvtID that have a Tran Status of Inactive or Delete ***
         '*********************************************************************************************
@@ -253,7 +252,6 @@ Module PurchasingCode
             Call LogMessage("", oEventLog)
             Call LogMessage("", oEventLog)
         End If
-
 
         '******************************************************
         '*** Check for Purchase Orders without detail lines ***
@@ -294,7 +292,8 @@ Module PurchasingCode
             NbrOfWarnings_PO = NbrOfWarnings_PO + 1
         End Try
 
-        Call oEventLog.LogMessage(EndProcess, "Validate Purchasing")
+        'Call oEventLog.LogMessage(EndProcess, "Validate Purchasing")
+        Call oEventLog.LogMessage(EndProcess, "Repair Tool " & gcReleaseVersion.Trim & vbNewLine & "Validate Purchasing")
 
         Call MessageBox.Show("Purchasing validation complete.", "Purchasing Validation")
 
