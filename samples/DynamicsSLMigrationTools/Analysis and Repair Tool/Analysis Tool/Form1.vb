@@ -17,14 +17,14 @@ Imports System.Collections
 Imports System.Configuration
 Imports System.Data.SqlClient
 Friend Class Form1
-	Inherits System.Windows.Forms.Form
-	
-	Protected m_IsInitializing As Boolean
-	Protected ReadOnly Property IsInitializing() As Boolean
-		Get
-			Return m_IsInitializing
-		End Get
-	End Property
+    Inherits System.Windows.Forms.Form
+
+    Protected m_IsInitializing As Boolean
+    Protected ReadOnly Property IsInitializing() As Boolean
+        Get
+            Return m_IsInitializing
+        End Get
+    End Property
 
     Private Sub Form1_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
 
